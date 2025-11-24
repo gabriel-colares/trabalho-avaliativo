@@ -67,10 +67,89 @@ void titulo(const char txt[]) {
   printf("=== %s ===\n", txt);
 }
 
-void pause() {
+void pause()
+{
   int c;
   printf("\nPressione Enter para continuar...");
   while ((c = getchar()) != '\n' && c != EOF) {}
+}
+
+void limparEntrada()
+{
+  int c;
+  while ((c = getchar()) != '\n' && c != EOF) {}
+}
+
+void lerLinha(char s[], int tam)
+{
+  if (tam <= 0) return;
+  fgets(s, tam, stdin);
+  s[strcspn(s, "\n")] = 0;
+}
+
+int lerInt(const char prompt[])
+{
+  int x;
+  int ok = 0;
+  do {
+    printf("%s", prompt);
+    if (scanf("%d", &x) == 1) {
+      ok = 1;
+    } else {
+      printf("Entrada invalida. Digite um numero.\n");
+    }
+    limparEntrada();
+  } while (!ok);
+  return x;
+}
+
+
+int indiceProfissaoPorCodigo(int codigo)
+{
+  for (int i = 0; i < qtdProfissoes; i++) if (profissoes[i].codigo == codigo) return i;
+  return -1;
+}
+
+int indiceProfissionalPorMatricula(int mat)
+{
+  for (int i = 0; i < qtdProfissionais; i++) if (profissionais[i].matricula == mat) return i;
+  return -1;
+}
+
+int indiceClientePorCodigo(int cod)
+{
+  for (int i = 0; i < qtdClientes; i++) if (clientes[i].codigo == cod) return i;
+  return -1;
+}
+
+void mostrarProfissoes()
+{
+  printf("\nProfissoes cadastradas:\n");
+  for (int i = 0; i < qtdProfissoes; i++)
+  {
+    printf("Codigo %d | %s (%s)\n", profissoes[i].codigo, profissoes[i].nome, profissoes[i].sigla);
+  }
+  if (qtdProfissoes == 0) printf("Nenhuma profissao cadastrada.\n");
+}
+
+void mostrarProfissionais()
+{
+  printf("\nProfissionais cadastrados:\n");
+  for (int i = 0; i < qtdProfissionais; i++)
+  {
+    printf("Matricula %d | %s | Profissao %d\n", profissionais[i].matricula, profissionais[i].nome, profissionais[i].prof_codigo);
+  }
+  if (qtdProfissionais == 0) printf("Nenhum profissional cadastrado.\n");
+}
+
+void mostrarClientes()
+{
+  printf("\nClientes cadastrados:\n");
+  for (int i = 0; i < qtdClientes; i++)
+  {
+    printf("Codigo %d | %s | Fone %s\n", clientes[i].codigo, clientes[i].nome, clientes[i].fone);
+  }
+  if (qtdClientes == 0) printf("Nenhum cliente cadastrado.\n");
 }
 
 struct Data lerData() {
@@ -81,6 +160,7 @@ struct Data lerData() {
   scanf("%d", &d.mes);
   printf("Ano: ");
   scanf("%d", &d.ano);
+  limparEntrada();
   return d;
 }
 
@@ -97,15 +177,18 @@ void cadastrarProfissao() {
 
   printf("Codigo: ");
   scanf("%d", &p.codigo);
+  while (indiceProfissaoPorCodigo(p.codigo) != -1)
+  {
+    printf("Codigo ja existente. Digite outro: ");
+    scanf("%d", &p.codigo);
+  }
 
   printf("Nome: ");
-  getchar();
-  fgets(p.nome, 50, stdin);
-  p.nome[strcspn(p.nome, "\n")] = 0;
+  limparEntrada();
+  lerLinha(p.nome, 50);
 
   printf("Sigla (CRM, CRO...): ");
-  fgets(p.sigla, 10, stdin);
-  p.sigla[strcspn(p.sigla, "\n")] = 0;
+  lerLinha(p.sigla, 10);
 
   profissoes[qtdProfissoes++] = p;
 
@@ -139,38 +222,43 @@ void cadastrarProfissional() {
 
   printf("Matricula: ");
   scanf("%d", &p.matricula);
+  while (indiceProfissionalPorMatricula(p.matricula) != -1)
+  {
+    printf("Matricula existente. Digite outra: ");
+    scanf("%d", &p.matricula);
+  }
 
-  printf("CPF: ");
-  getchar();
-  fgets(p.cpf, 20, stdin);
-  p.cpf[strcspn(p.cpf, "\n")] = 0;
+  printf("CPF (ex: 000.000.000-00 ou 00000000000): ");
+  limparEntrada();
+  lerLinha(p.cpf, 20);
 
-  printf("Nome: ");
-  fgets(p.nome, 80, stdin);
-  p.nome[strcspn(p.nome, "\n")] = 0;
+  printf("Nome completo (ex: Joao da Silva): ");
+  lerLinha(p.nome, 80);
 
-  printf("Codigo da profissao: ");
+  mostrarProfissoes();
+  printf("\nDigite o codigo da profissao: ");
   scanf("%d", &p.prof_codigo);
+  while (indiceProfissaoPorCodigo(p.prof_codigo) == -1)
+  {
+    printf("Codigo de profissao inexistente. Digite novamente: ");
+    scanf("%d", &p.prof_codigo);
+  }
 
-  printf("Numero RP: ");
-  getchar();
-  fgets(p.numRP, 20, stdin);
-  p.numRP[strcspn(p.numRP, "\n")] = 0;
+  printf("Numero RP (ex: 12345-AB): ");
+  limparEntrada();
+  lerLinha(p.numRP, 20);
 
-  printf("Tipo de profissional (medico, enfermeiro...): ");
-  fgets(p.tipo, 40, stdin);
-  p.tipo[strcspn(p.tipo, "\n")] = 0;
+  printf("Tipo de profissional (ex: medico, enfermeiro): ");
+  lerLinha(p.tipo, 40);
 
   printf("Data de nascimento:\n");
   p.nascimento = lerData();
 
-  printf("Email: ");
-  fgets(p.email, 80, stdin);
-  p.email[strcspn(p.email, "\n")] = 0;
+  printf("Email (ex: usuario@dominio.com): ");
+  lerLinha(p.email, 80);
 
-  printf("Fone: ");
-  fgets(p.fone, 20, stdin);
-  p.fone[strcspn(p.fone, "\n")] = 0;
+  printf("Fone (ex: 92 3333-3333): ");
+  lerLinha(p.fone, 20);
 
   profissionais[qtdProfissionais++] = p;
 
@@ -204,11 +292,15 @@ void cadastrarCliente() {
 
   printf("Codigo: ");
   scanf("%d", &c.codigo);
+  while (indiceClientePorCodigo(c.codigo) != -1)
+  {
+    printf("Codigo existente. Digite outro: ");
+    scanf("%d", &c.codigo);
+  }
 
-  printf("Nome: ");
-  getchar();
-  fgets(c.nome, 80, stdin);
-  c.nome[strcspn(c.nome, "\n")] = 0;
+  printf("Nome completo (ex: Joao da Silva): ");
+  limparEntrada();
+  lerLinha(c.nome, 80);
 
   printf("Data nascimento:\n");
   c.nascimento = lerData();
@@ -216,22 +308,18 @@ void cadastrarCliente() {
   printf("Idade: ");
   scanf("%d", &c.idade);
 
-  printf("Email: ");
-  getchar();
-  fgets(c.email, 80, stdin);
-  c.email[strcspn(c.email, "\n")] = 0;
+  printf("Email (ex: usuario@dominio.com): ");
+  limparEntrada();
+  lerLinha(c.email, 80);
 
-  printf("Fone: ");
-  fgets(c.fone, 20, stdin);
-  c.fone[strcspn(c.fone, "\n")] = 0;
+  printf("Fone (ex: 92 3333-3333): ");
+  lerLinha(c.fone, 20);
 
-  printf("Celular: ");
-  fgets(c.celular, 20, stdin);
-  c.celular[strcspn(c.celular, "\n")] = 0;
+  printf("Celular (ex: 92 9 9999-9999): ");
+  lerLinha(c.celular, 20);
 
-  printf("Endereco completo: ");
-  fgets(c.endereco, 150, stdin);
-  c.endereco[strcspn(c.endereco, "\n")] = 0;
+  printf("Endereco completo (ex: Rua X, 123 - Bairro): ");
+  lerLinha(c.endereco, 150);
 
   clientes[qtdClientes++] = c;
 
@@ -267,20 +355,40 @@ void cadastrarAtendimento() {
 
   printf("Numero do atendimento: ");
   scanf("%d", &a.numero);
+  for (int i = 0; i < qtdAtendimentos; i++)
+  {
+    if (atendimentos[i].numero == a.numero)
+    {
+      printf("Numero existente. Digite outro: ");
+      scanf("%d", &a.numero);
+      i = -1;
+    }
+  }
 
-  printf("Matricula do profissional: ");
+  mostrarProfissionais();
+  printf("\nDigite a matricula do profissional: ");
   scanf("%d", &a.prof_matricula);
+  while (indiceProfissionalPorMatricula(a.prof_matricula) == -1)
+  {
+    printf("Matricula inexistente. Digite novamente: ");
+    scanf("%d", &a.prof_matricula);
+  }
 
-  printf("Codigo do cliente: ");
+  mostrarClientes();
+  printf("\nDigite o codigo do cliente: ");
   scanf("%d", &a.cliente_codigo);
+  while (indiceClientePorCodigo(a.cliente_codigo) == -1)
+  {
+    printf("Codigo de cliente inexistente. Digite novamente: ");
+    scanf("%d", &a.cliente_codigo);
+  }
 
   printf("Data do atendimento:\n");
   a.data = lerData();
 
   printf("Descricao: ");
-  getchar();
-  fgets(a.descricao, 200, stdin);
-  a.descricao[strcspn(a.descricao, "\n")] = 0;
+  limparEntrada();
+  lerLinha(a.descricao, 200);
 
   atendimentos[qtdAtendimentos++] = a;
 
@@ -307,9 +415,11 @@ void listarAtendimentos() {
 void relAniversariantesProfissionais() {
   titulo("Aniversariantes Profissionais");
 
-  int mes;
-  printf("Digite o mes: ");
-  scanf("%d", &mes);
+  int mes = lerInt("Digite o mes (1-12): ");
+  while (mes < 1 || mes > 12) {
+    printf("Mes invalido. Digite entre 1 e 12.\n");
+    mes = lerInt("Digite o mes (1-12): ");
+  }
 
   printf("\n");
 
@@ -328,9 +438,11 @@ void relAniversariantesProfissionais() {
 void relAniversariantesClientes() {
   titulo("Aniversariantes Clientes");
 
-  int mes;
-  printf("Digite o mes: ");
-  scanf("%d", &mes);
+  int mes = lerInt("Digite o mes (1-12): ");
+  while (mes < 1 || mes > 12) {
+    printf("Mes invalido. Digite entre 1 e 12.\n");
+    mes = lerInt("Digite o mes (1-12): ");
+  }
 
   for (int i = 0; i < qtdClientes; i++) {
     if (clientes[i].nascimento.mes == mes) {
@@ -381,9 +493,7 @@ void relAtendimentosPorPeriodo() {
 void relAtendimentoPorMes() {
   titulo("Atendimento por mes");
 
-  int ano;
-  printf("Digite o ano: ");
-  scanf("%d", &ano);
+  int ano = lerInt("Digite o ano: ");
 
   int meses[13] = {0};
 
@@ -404,9 +514,7 @@ void relAtendimentoPorMes() {
 void relEstatisticaPorProfissional() {
   titulo("Estatistica por Profissional");
 
-  int mat;
-  printf("Matricula do profissional: ");
-  scanf("%d", &mat);
+  int mat = lerInt("Matricula do profissional: ");
 
   int total = 0;
 
@@ -438,8 +546,7 @@ void menu() {
     printf("[12] Rel: Atendimentos por Mes de um Ano\n");
     printf("[13] Rel: Estatistica por Profissional\n");
     printf("[0] Sair\n");
-    printf("\nEscolha: ");
-    scanf("%d", &op);
+    op = lerInt("\nEscolha: ");
 
     switch (op) {
       case 1: cadastrarProfissao(); break;
