@@ -1,85 +1,59 @@
-# Saúde++ - Sistema de Gestão de Atendimentos
+# Sistema de Saúde (Trabalho 2)
 
-**Saúde++ – Cuidando de dados com precisão e simplicidade**
+Aplicação de console em C para gerenciar informações de profissionais de saúde, clientes e atendimentos, com cadastros, edições, exclusões, listagens e relatórios.
 
-Aplicação em C para gerenciamento de profissões, profissionais, clientes e atendimentos, com listagens e relatórios úteis para o dia a dia administrativo.
+## Descrição
 
-## 📋 Descrição
-- Sistema de console orientado a menu, com entradas validadas e prompts amigáveis.
-- Foco em fluxo simples no Windows, utilizando limpeza de tela e leitura robusta de inputs.
+- Fluxo de uso guiado por prompts claros e etapas numeradas
+- Dados mantidos apenas em memória (arrays); sem persistência em arquivo
+- Código sem uso de ponteiros nas operações de domínio; buscas por índice
 
-## 🎯 Funcionalidades
-- Cadastrar Profissão, Profissional, Cliente e Atendimento
-- Listar Profissões, Profissionais, Clientes e Atendimentos
-- Relatórios:
-  - Aniversariantes de Profissionais
-  - Aniversariantes de Clientes
-  - Atendimentos por Período
-  - Atendimentos por Mês de um Ano
-  - Estatística por Profissional
+## Funcionalidades
 
-## 🧱 Estrutura de Dados
-- Constantes de capacidade:
-  - `MAX_PROFISSOES`, `MAX_PROFISSIONAIS`, `MAX_CLIENTES`, `MAX_ATENDIMENTOS`
-- Estruturas principais:
-  - `struct Data`, `struct Profissao`, `struct Profissional`, `struct Cliente`, `struct Atendimento`
-- Armazenamento em memória (arrays):
-  - `profissoes[]`, `profissionais[]`, `clientes[]`, `atendimentos[]`
+- Cadastros
+  - Profissão: `codigo`, `nome`, `sigla`
+  - Profissional: `matricula`, `cpf`, `nome`, `prof_codigo`, `numRP`, `tipo`, `dataNasc`, `email`, `fone`
+  - Cliente: `codigo`, `nome`, `dataNasc`, `idade`, `email`, `fone`, `celular`, `endereco {logradouro, numero, bairro, cidade, estado, cep}`
+  - Atendimento: `numero`, `prof_matricula`, `cliente_codigo`, `data`, `descricao`
+- Edição/Exclusão
+  - Validações impedem exclusão de registros com dependências (ex.: profissão em uso, cliente/profissional com atendimentos)
+- Listagens
+  - Profissões, Profissionais, Clientes e Atendimentos (com nomes resolvidos por índice)
+- Relatórios
+  - Aniversariantes da Instituição (Profissionais)
+  - Aniversariantes dos Clientes (nome, dia/mês, fone, celular, email)
+  - Atendimentos por Período (nome do cliente, nome do profissional, data)
+  - Atendimentos por Mês em um ano (mês e quantidade)
+  - Estatística de Atendimentos por Profissional em período
 
-## 🚀 Como Compilar e Executar
-### Pré-requisitos
-- Compilador C (GCC/MinGW ou similares)
-- Sistema operacional Windows (devido ao uso de `system("cls")`)
+## Compilação
 
-### Compilação
-```bash
-gcc -Wall -O2 main.c -o saude.exe
-```
+- Pré-requisito: GCC (MinGW) ou compatível
+- No diretório `trabalho-2`:
+  - `gcc -Wall -O2 main.c -o sistema.exe`
 
-### Execução
-```bash
-saude.exe
-```
+## Execução
 
-> Observação: Em outros sistemas, substitua `system("cls")` por `system("clear")` no código.
+- `./sistema.exe`
+- Navegue pelos menus:
+  - Menu Principal: Profissões, Profissionais, Clientes, Atendimentos, Relatórios
+  - Cada seção possui opções de cadastrar, editar, excluir e listar
 
-## 🎮 Como Usar
-1. Iniciar o programa para exibir o menu principal
-2. Escolher uma opção:
-   - `1` – Cadastrar Profissão
-   - `2` – Cadastrar Profissional
-   - `3` – Cadastrar Cliente
-   - `4` – Cadastrar Atendimento
-   - `5` – Listar Profissões
-   - `6` – Listar Profissionais
-   - `7` – Listar Clientes
-   - `8` – Listar Atendimentos
-   - `9` – Relatório de Aniversariantes (Profissionais)
-   - `10` – Relatório de Aniversariantes (Clientes)
-   - `11` – Atendimentos por Período
-   - `12` – Atendimentos por Mês
-   - `13` – Estatística por Profissional
-   - `0` – Sair
+## Entrada de Dados
 
-## ✅ Boas Práticas de Entrada
-- Após `scanf` de números, o sistema limpa o buffer antes de ler textos
-- Placeholders indicam formatos esperados (ex.: `usuario@dominio.com`, `92 3333-3333`)
-- Código/matrícula duplicados solicitam nova entrada
-- As listagens e relatórios permanecem na tela até confirmação com Enter
+- Leitura de inteiros e datas com validação (sem `scanf` direto)
+- Leitura de textos com `fgets` e remoção de `\n`
 
-## 📁 Estrutura do Código
-- Arrays e estruturas de domínio (`main.c`)
-- Utilitários de entrada:
-  - `lerLinha()`, `lerInt()`, `lerData()`, `limparEntrada()`, `pause()`
-- Fluxo principal:
-  - `menu()`, `cadastrarProfissao()`, `cadastrarProfissional()`, `cadastrarCliente()`, `cadastrarAtendimento()`
-  - `listarProfissoes()`, `listarProfissionais()`, `listarClientes()`, `listarAtendimentos()`
-  - Relatórios: `relAniversariantesProfissionais()`, `relAniversariantesClientes()`, `relAtendimentosPorPeriodo()`, `relAtendimentoPorMes()`, `relEstatisticaPorProfissional()`
+## Limitações
 
-## 📝 Autor
-Desenvolvido como trabalho avaliativo para o curso de ATP (Algoritmos e Técnicas de Programação).
+- Dados existem apenas durante a execução; ao encerrar, tudo é descartado
+- Interface baseada em console
 
-## ⚙️ Tecnologias Utilizadas
-- **Linguagem**: C
-- **Bibliotecas**:
-  - `stdio.h`, `stdlib.h`, `string.h`
+## Observações
+
+- Em Windows, limpeza de tela usa `cls`; em ambientes POSIX, use `clear` se necessário
+- Fonte monoespaçada no terminal melhora a leitura
+
+## Estrutura
+
+- `main.c`: estruturas, utilitários de entrada, menus, cadastros, validações, listagens e relatórios

@@ -11,6 +11,15 @@ struct Data {
   int dia, mes, ano;
 };
 
+struct Endereco {
+  char logradouro[80];
+  char numero[10];
+  char bairro[50];
+  char cidade[50];
+  char estado[3];
+  char cep[15];
+};
+
 struct Profissao {
   int codigo;
   char nome[50];
@@ -37,7 +46,7 @@ struct Cliente {
   char email[80];
   char fone[20];
   char celular[20];
-  char endereco[150];
+  struct Endereco endereco;
 };
 
 struct Atendimento {
@@ -99,451 +108,889 @@ int lerInt(const char prompt[]) {
   return x;
 }
 
+struct Data lerData() {
+  struct Data d;
+  int valida = 0;
+  do {
+    printf("Dia: ");
+    scanf("%d", &d.dia);
+    printf("Mes: ");
+    scanf("%d", &d.mes);
+    printf("Ano: ");
+    scanf("%d", &d.ano);
+    limparEntrada();
+    if (d.dia < 1 || d.dia > 31 || d.mes < 1 || d.mes > 12 || d.ano < 1900) {
+      printf("Data invalida. Digite novamente.\n");
+    } else {
+      valida = 1;
+    }
+  } while (!valida);
+  return d;
+}
+
+int compararDatas(struct Data d1, struct Data d2) {
+  if (d1.ano < d2.ano) return -1;
+  if (d1.ano > d2.ano) return 1;
+  if (d1.mes < d2.mes) return -1;
+  if (d1.mes > d2.mes) return 1;
+  if (d1.dia < d2.dia) return -1;
+  if (d1.dia > d2.dia) return 1;
+  return 0;
+}
+
+int dataEstaNoPeriodo(struct Data d, struct Data ini, struct Data fim) {
+  return (compararDatas(d, ini) >= 0 && compararDatas(d, fim) <= 0);
+}
 
 int indiceProfissaoPorCodigo(int codigo) {
-  for (int i = 0; i < qtdProfissoes; i++) if (profissoes[i].codigo == codigo) return i;
+  int i;
+  for (i = 0; i < qtdProfissoes; i++) {
+    if (profissoes[i].codigo == codigo) return i;
+  }
   return -1;
 }
 
 int indiceProfissionalPorMatricula(int mat) {
-  for (int i = 0; i < qtdProfissionais; i++) if (profissionais[i].matricula == mat) return i;
+  int i;
+  for (i = 0; i < qtdProfissionais; i++) {
+    if (profissionais[i].matricula == mat) return i;
+  }
   return -1;
 }
 
 int indiceClientePorCodigo(int cod) {
-  for (int i = 0; i < qtdClientes; i++) if (clientes[i].codigo == cod) return i;
+  int i;
+  for (i = 0; i < qtdClientes; i++) {
+    if (clientes[i].codigo == cod) return i;
+  }
+  return -1;
+}
+
+int indiceAtendimentoPorNumero(int num) {
+  int i;
+  for (i = 0; i < qtdAtendimentos; i++) {
+    if (atendimentos[i].numero == num) return i;
+  }
   return -1;
 }
 
 void mostrarProfissoes() {
-  printf("\nProfissoes cadastradas:\n");
-  for (int i = 0; i < qtdProfissoes; i++)
-  {
-    printf("Codigo %d | %s (%s)\n", profissoes[i].codigo, profissoes[i].nome, profissoes[i].sigla);
+  int i;
+  printf("\n--- Lista Auxiliar de Profissoes ---\n");
+  for (i = 0; i < qtdProfissoes; i++) {
+    printf("Cod: %d | Nome: %s\n", profissoes[i].codigo, profissoes[i].nome);
   }
-  if (qtdProfissoes == 0) printf("Nenhuma profissao cadastrada.\n");
 }
 
 void mostrarProfissionais() {
-  printf("\nProfissionais cadastrados:\n");
-  for (int i = 0; i < qtdProfissionais; i++)
-  {
-    printf("Matricula %d | %s | Profissao %d\n", profissionais[i].matricula, profissionais[i].nome, profissionais[i].prof_codigo);
+  int i;
+  printf("\n--- Lista Auxiliar de Profissionais ---\n");
+  for (i = 0; i < qtdProfissionais; i++) {
+    printf("Mat: %d | Nome: %s\n", profissionais[i].matricula, profissionais[i].nome);
   }
-  if (qtdProfissionais == 0) printf("Nenhum profissional cadastrado.\n");
 }
 
 void mostrarClientes() {
-  printf("\nClientes cadastrados:\n");
-  for (int i = 0; i < qtdClientes; i++)
-  {
-    printf("Codigo %d | %s | Fone %s\n", clientes[i].codigo, clientes[i].nome, clientes[i].fone);
+  int i;
+  printf("\n--- Lista Auxiliar de Clientes ---\n");
+  for (i = 0; i < qtdClientes; i++) {
+    printf("Cod: %d | Nome: %s\n", clientes[i].codigo, clientes[i].nome);
   }
-  if (qtdClientes == 0) printf("Nenhum cliente cadastrado.\n");
 }
 
-struct Data lerData() {
-  struct Data d;
-  printf("Dia: ");
-  scanf("%d", &d.dia);
-  printf("Mes: ");
-  scanf("%d", &d.mes);
-  printf("Ano: ");
-  scanf("%d", &d.ano);
-  limparEntrada();
-  return d;
+int profissaoEmUso(int codProfissao) {
+  int i;
+  for (i = 0; i < qtdProfissionais; i++) {
+    if (profissionais[i].prof_codigo == codProfissao) return 1;
+  }
+  return 0;
+}
+
+int profissionalTemAtendimentos(int mat) {
+  int i;
+  for (i = 0; i < qtdAtendimentos; i++) {
+    if (atendimentos[i].prof_matricula == mat) return 1;
+  }
+  return 0;
+}
+
+int clienteTemAtendimentos(int cod) {
+  int i;
+  for (i = 0; i < qtdAtendimentos; i++) {
+    if (atendimentos[i].cliente_codigo == cod) return 1;
+  }
+  return 0;
 }
 
 void cadastrarProfissao() {
+  struct Profissao p;
   titulo("Cadastro de Profissao");
-
   if (qtdProfissoes >= MAX_PROFISSOES) {
-    printf("Limite de profissoes atingido.");
+    printf("Limite atingido.");
     pause();
     return;
   }
-
-  struct Profissao p;
-
-  printf("Codigo: ");
-  scanf("%d", &p.codigo);
-  while (indiceProfissaoPorCodigo(p.codigo) != -1)
-  {
-    printf("Codigo ja existente. Digite outro: ");
-    scanf("%d", &p.codigo);
+  p.codigo = lerInt("Codigo (0 cancela): ");
+  if (p.codigo == 0) return;
+  if (indiceProfissaoPorCodigo(p.codigo) != -1) {
+    printf("Codigo ja existe.\n");
+    pause();
+    return;
   }
-  limparEntrada();
   printf("Nome: ");
   lerLinha(p.nome, 50);
-  printf("Sigla (CRM, CRO...): ");
+  printf("Sigla: ");
   lerLinha(p.sigla, 10);
-
   profissoes[qtdProfissoes++] = p;
-
-  printf("\nProfissao cadastrada!");
+  printf("Sucesso!");
   pause();
 }
 
-void listarProfissoes() {
-  titulo("Listagem de Profissoes");
-
-  for (int i = 0; i < qtdProfissoes; i++) {
-    printf("%d - %s (%s)\n",
-           profissoes[i].codigo,
-           profissoes[i].nome,
-           profissoes[i].sigla);
+void editarProfissao() {
+  int cod, idx;
+  titulo("Editar Profissao");
+  mostrarProfissoes();
+  cod = lerInt("\nCodigo da profissao para editar: ");
+  idx = indiceProfissaoPorCodigo(cod);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
   }
+  printf("Novo Nome: ");
+  lerLinha(profissoes[idx].nome, 50);
+  printf("Nova Sigla: ");
+  lerLinha(profissoes[idx].sigla, 10);
+  printf("Atualizado com sucesso!");
+  pause();
+}
 
+void excluirProfissao() {
+  int cod, idx, i;
+  titulo("Excluir Profissao");
+  mostrarProfissoes();
+  cod = lerInt("\nCodigo da profissao para excluir: ");
+  idx = indiceProfissaoPorCodigo(cod);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
+  }
+  if (profissaoEmUso(cod)) {
+    printf("ERRO: Existem profissionais cadastrados com esta profissao.\nExclusao negada.");
+    pause();
+    return;
+  }
+  for (i = idx; i < qtdProfissoes - 1; i++) {
+    profissoes[i] = profissoes[i + 1];
+  }
+  qtdProfissoes--;
+  printf("Profissao excluida.");
   pause();
 }
 
 void cadastrarProfissional() {
+  struct Profissional p;
   titulo("Cadastro de Profissional");
-
+  if (qtdProfissoes == 0) {
+    printf("Cadastre uma profissao antes.");
+    pause();
+    return;
+  }
   if (qtdProfissionais >= MAX_PROFISSIONAIS) {
     printf("Limite atingido.");
     pause();
     return;
   }
-
-  struct Profissional p;
-
-  printf("Matricula: ");
-  scanf("%d", &p.matricula);
-  while (indiceProfissionalPorMatricula(p.matricula) != -1)
-  {
-    printf("Matricula existente. Digite outra: ");
-    scanf("%d", &p.matricula);
+  p.matricula = lerInt("Matricula (0 cancela): ");
+  if (p.matricula == 0) return;
+  if (indiceProfissionalPorMatricula(p.matricula) != -1) {
+    printf("Matricula ja existe.");
+    pause();
+    return;
   }
-
-  printf("CPF (ex: 000.000.000-00 ou 00000000000): ");
-  limparEntrada();
+  printf("CPF: ");
   lerLinha(p.cpf, 20);
-
-  printf("Nome completo (ex: Joao da Silva): ");
+  printf("Nome: ");
   lerLinha(p.nome, 80);
-  printf("Email (ex: usuario@dominio.com): ");
+  printf("Email: ");
   lerLinha(p.email, 80);
-  printf("Fone (ex: 92 3333-3333): ");
+  printf("Fone: ");
   lerLinha(p.fone, 20);
-
   mostrarProfissoes();
-  printf("\nDigite o codigo da profissao: ");
-  scanf("%d", &p.prof_codigo);
-  while (indiceProfissaoPorCodigo(p.prof_codigo) == -1)
-  {
-    printf("Codigo de profissao inexistente. Digite novamente: ");
+  p.prof_codigo = lerInt("Codigo da Profissao: ");
+  while (indiceProfissaoPorCodigo(p.prof_codigo) == -1) {
+    printf("Profissao invalida. Tente novamente: ");
     scanf("%d", &p.prof_codigo);
+    limparEntrada();
   }
-
-  printf("Numero RP (ex: 12345-AB): ");
-  limparEntrada();
+  printf("Num RP: ");
   lerLinha(p.numRP, 20);
-  printf("Tipo de profissional (ex: medico, enfermeiro): ");
+  printf("Tipo (Medico, Enfermeiro...): ");
   lerLinha(p.tipo, 40);
-  printf("Data de nascimento:\n");
+  printf("Data Nascimento:\n");
   p.nascimento = lerData();
-
   profissionais[qtdProfissionais++] = p;
-
-  printf("\nProfissional cadastrado!");
+  printf("Sucesso!");
   pause();
 }
 
-void listarProfissionais() {
-  titulo("Listagem de Profissionais");
-
-  for (int i = 0; i < qtdProfissionais; i++) {
-    printf("Mat: %d | Nome: %s | Profissao: %d\n",
-           profissionais[i].matricula,
-           profissionais[i].nome,
-           profissionais[i].prof_codigo);
+void editarProfissional() {
+  int mat, idx;
+  titulo("Editar Profissional");
+  mat = lerInt("Digite a matricula do profissional: ");
+  idx = indiceProfissionalPorMatricula(mat);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
   }
+  printf("Editando: %s\n", profissionais[idx].nome);
+  printf("Novo Nome: ");
+  lerLinha(profissionais[idx].nome, 80);
+  printf("Novo Email: ");
+  lerLinha(profissionais[idx].email, 80);
+  printf("Novo Fone: ");
+  lerLinha(profissionais[idx].fone, 20);
+  printf("Novo Tipo: ");
+  lerLinha(profissionais[idx].tipo, 40);
+  printf("Dados atualizados!");
+  pause();
+}
 
+void excluirProfissional() {
+  int mat, idx, i;
+  titulo("Excluir Profissional");
+  mat = lerInt("Digite a matricula para excluir: ");
+  idx = indiceProfissionalPorMatricula(mat);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
+  }
+  if (profissionalTemAtendimentos(mat)) {
+    printf("ERRO: Este profissional possui atendimentos registrados.\nExclusao negada para manter historico.");
+    pause();
+    return;
+  }
+  for (i = idx; i < qtdProfissionais - 1; i++) {
+    profissionais[i] = profissionais[i + 1];
+  }
+  qtdProfissionais--;
+  printf("Profissional excluido.");
   pause();
 }
 
 void cadastrarCliente() {
+  struct Cliente c;
   titulo("Cadastro de Cliente");
-
   if (qtdClientes >= MAX_CLIENTES) {
-    printf("Limite atingido!");
+    printf("Limite atingido.");
     pause();
     return;
   }
-
-  struct Cliente c;
-
-  printf("Codigo: ");
-  scanf("%d", &c.codigo);
-  while (indiceClientePorCodigo(c.codigo) != -1)
-  {
-    printf("Codigo existente. Digite outro: ");
-    scanf("%d", &c.codigo);
+  c.codigo = lerInt("Codigo (0 cancela): ");
+  if (c.codigo == 0) return;
+  if (indiceClientePorCodigo(c.codigo) != -1) {
+    printf("Codigo ja existe.");
+    pause();
+    return;
   }
-
-  printf("Nome completo (ex: Joao da Silva): ");
-  limparEntrada();
+  printf("Nome: ");
   lerLinha(c.nome, 80);
-  printf("Data nascimento:\n");
+  printf("Data Nascimento:\n");
   c.nascimento = lerData();
-  printf("Idade: ");
-  scanf("%d", &c.idade);
-  printf("Email (ex: usuario@dominio.com): ");
-  limparEntrada();
+  c.idade = lerInt("Idade: ");
+  printf("Email: ");
   lerLinha(c.email, 80);
-  printf("Fone (ex: 92 3333-3333): ");
+  printf("Fone: ");
   lerLinha(c.fone, 20);
-  printf("Celular (ex: 92 9 9999-9999): ");
+  printf("Celular: ");
   lerLinha(c.celular, 20);
-  printf("Endereco completo (ex: Rua X, 123 - Bairro): ");
-  lerLinha(c.endereco, 150);
-
+  printf("\n--- Endereco ---\n");
+  printf("Logradouro (Rua/Av): ");
+  lerLinha(c.endereco.logradouro, 80);
+  printf("Numero: ");
+  lerLinha(c.endereco.numero, 10);
+  printf("Bairro: ");
+  lerLinha(c.endereco.bairro, 50);
+  printf("Cidade: ");
+  lerLinha(c.endereco.cidade, 50);
+  printf("Estado (UF): ");
+  lerLinha(c.endereco.estado, 3);
+  printf("CEP: ");
+  lerLinha(c.endereco.cep, 15);
   clientes[qtdClientes++] = c;
-
-  printf("\nCliente cadastrado!");
+  printf("Sucesso!");
   pause();
 }
 
-void listarClientes() {
-  titulo("Listagem de Clientes");
-
-  for (int i = 0; i < qtdClientes; i++) {
-    printf("%d - %s | %d/%d | Fone: %s\n",
-           clientes[i].codigo,
-           clientes[i].nome,
-           clientes[i].nascimento.dia,
-           clientes[i].nascimento.mes,
-           clientes[i].fone);
+void editarCliente() {
+  int cod, idx;
+  titulo("Editar Cliente");
+  cod = lerInt("Codigo do cliente: ");
+  idx = indiceClientePorCodigo(cod);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
   }
+  printf("Editando: %s\n", clientes[idx].nome);
+  printf("Novo Nome: ");
+  lerLinha(clientes[idx].nome, 80);
+  printf("Novo Email: ");
+  lerLinha(clientes[idx].email, 80);
+  printf("Novo Celular: ");
+  lerLinha(clientes[idx].celular, 20);
+  printf("--- Atualizar Endereco ---\n");
+  printf("Novo Logradouro: ");
+  lerLinha(clientes[idx].endereco.logradouro, 80);
+  printf("Novo Numero: ");
+  lerLinha(clientes[idx].endereco.numero, 10);
+  printf("Novo Bairro: ");
+  lerLinha(clientes[idx].endereco.bairro, 50);
+  printf("Dados atualizados!");
+  pause();
+}
 
+void excluirCliente() {
+  int cod, idx, i;
+  titulo("Excluir Cliente");
+  cod = lerInt("Codigo do cliente para excluir: ");
+  idx = indiceClientePorCodigo(cod);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
+  }
+  if (clienteTemAtendimentos(cod)) {
+    printf("ERRO: Este cliente possui atendimentos registrados.\nExclusao negada.");
+    pause();
+    return;
+  }
+  for (i = idx; i < qtdClientes - 1; i++) {
+    clientes[i] = clientes[i + 1];
+  }
+  qtdClientes--;
+  printf("Cliente excluido.");
   pause();
 }
 
 void cadastrarAtendimento() {
-  titulo("Cadastro de Atendimento");
-
+  struct Atendimento a;
+  titulo("Novo Atendimento");
   if (qtdAtendimentos >= MAX_ATENDIMENTOS) {
-    printf("Limite atingido!");
+    printf("Limite atingido.");
     pause();
     return;
   }
-
-  struct Atendimento a;
-
-  printf("Numero do atendimento: ");
-  scanf("%d", &a.numero);
-  for (int i = 0; i < qtdAtendimentos; i++) {
-    if (atendimentos[i].numero == a.numero) {
-      printf("Numero existente. Digite outro: ");
-      scanf("%d", &a.numero);
-      i = -1;
-    }
+  if (qtdProfissionais == 0 || qtdClientes == 0) {
+    printf("Faltam cadastros previos.");
+    pause();
+    return;
+  }
+  a.numero = lerInt("Numero Atendimento (0 cancela): ");
+  if (a.numero == 0) return;
+  if (indiceAtendimentoPorNumero(a.numero) != -1) {
+    printf("Numero ja existe.");
+    pause();
+    return;
   }
   mostrarProfissionais();
-  printf("\nDigite a matricula do profissional: ");
-  scanf("%d", &a.prof_matricula);
-
+  a.prof_matricula = lerInt("Matricula Profissional: ");
   while (indiceProfissionalPorMatricula(a.prof_matricula) == -1) {
-    printf("Matricula inexistente. Digite novamente: ");
+    printf("Invalido. Digite novamente: ");
     scanf("%d", &a.prof_matricula);
+    limparEntrada();
   }
-  
   mostrarClientes();
-  printf("\nDigite o codigo do cliente: ");
-  scanf("%d", &a.cliente_codigo);
-
+  a.cliente_codigo = lerInt("Codigo Cliente: ");
   while (indiceClientePorCodigo(a.cliente_codigo) == -1) {
-    printf("Codigo de cliente inexistente. Digite novamente: ");
+    printf("Invalido. Digite novamente: ");
     scanf("%d", &a.cliente_codigo);
+    limparEntrada();
   }
-  printf("Data do atendimento:\n");
+  printf("Data Atendimento:\n");
   a.data = lerData();
   printf("Descricao: ");
-  limparEntrada();
   lerLinha(a.descricao, 200);
-
   atendimentos[qtdAtendimentos++] = a;
-
-  printf("\nAtendimento cadastrado!");
+  printf("Sucesso!");
   pause();
 }
 
-void listarAtendimentos() {
-  titulo("Atendimentos");
+void editarAtendimento() {
+  int num, idx;
+  titulo("Editar Atendimento");
+  num = lerInt("Numero do atendimento: ");
+  idx = indiceAtendimentoPorNumero(num);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
+  }
+  printf("Nova Descricao: ");
+  lerLinha(atendimentos[idx].descricao, 200);
+  printf("Nova Data:\n");
+  atendimentos[idx].data = lerData();
+  printf("Atualizado!");
+  pause();
+}
 
-  for (int i = 0; i < qtdAtendimentos; i++) {
-    printf("%d - Prof:%d Cliente:%d | %d/%d/%d\n",
-           atendimentos[i].numero,
-           atendimentos[i].prof_matricula,
-           atendimentos[i].cliente_codigo,
+void excluirAtendimento() {
+  int num, idx, i;
+  titulo("Excluir Atendimento");
+  num = lerInt("Numero do atendimento: ");
+  idx = indiceAtendimentoPorNumero(num);
+  if (idx == -1) {
+    printf("Nao encontrado.");
+    pause();
+    return;
+  }
+  for (i = idx; i < qtdAtendimentos - 1; i++) {
+    atendimentos[i] = atendimentos[i + 1];
+  }
+  qtdAtendimentos--;
+  printf("Atendimento excluido.");
+  pause();
+}
+
+void relListagemProfissionais() {
+  int i;
+  titulo("Relatorio: Lista de Profissionais");
+  for (i = 0; i < qtdProfissionais; i++) {
+    printf("Mat: %d | Nome: %s | Tipo: %s\n",
+           profissionais[i].matricula,
+           profissionais[i].nome,
+           profissionais[i].tipo);
+  }
+  pause();
+}
+
+void relAniversariantes() {
+  int mes, i, achou = 0;
+  titulo("Aniversariantes da Instituicao (Profissionais)");
+  mes = lerInt("Mes (1-12): ");
+  for (i = 0; i < qtdProfissionais; i++) {
+    if (profissionais[i].nascimento.mes == mes) {
+      printf("%s - %02d/%02d\n",
+             profissionais[i].nome,
+             profissionais[i].nascimento.dia,
+             profissionais[i].nascimento.mes);
+      achou = 1;
+    }
+  }
+  if (!achou) printf("Ninguem encontrado.");
+  pause();
+}
+
+void relAtendimentoGeral() {
+  int i, idxProf, idxCli;
+  const char *nomeProf;
+  const char *nomeCli;
+  titulo("Relatorio: Atendimento Geral");
+  for (i = 0; i < qtdAtendimentos; i++) {
+    idxProf = indiceProfissionalPorMatricula(atendimentos[i].prof_matricula);
+    idxCli = indiceClientePorCodigo(atendimentos[i].cliente_codigo);
+    nomeProf = (idxProf != -1) ? profissionais[idxProf].nome : "Desc.";
+    nomeCli = (idxCli != -1) ? clientes[idxCli].nome : "Desc.";
+    printf("Cli: %-20s | Prof: %-20s | Data: %02d/%02d/%04d\n",
+           nomeCli,
+           nomeProf,
            atendimentos[i].data.dia,
            atendimentos[i].data.mes,
            atendimentos[i].data.ano);
   }
-
   pause();
 }
 
-void relAniversariantesProfissionais() {
-  titulo("Aniversariantes Profissionais");
-
-  int mes = lerInt("Digite o mes (1-12): ");
-  while (mes < 1 || mes > 12) {
-    printf("Mes invalido. Digite entre 1 e 12.\n");
-    mes = lerInt("Digite o mes (1-12): ");
-  }
-
+void relAtendimentoPorPeriodo() {
+  int i, idxProf, idxCli;
+  struct Data ini, fim;
+  const char *nomeProf;
+  const char *nomeCli;
+  titulo("Relatorio: Atendimentos por Periodo");
+  printf("Data Inicial:\n");
+  ini = lerData();
+  printf("Data Final:\n");
+  fim = lerData();
   printf("\n");
-
-  for (int i = 0; i < qtdProfissionais; i++) {
-    if (profissionais[i].nascimento.mes == mes) {
-      printf("%s - %d/%d\n",
-             profissionais[i].nome,
-             profissionais[i].nascimento.dia,
-             profissionais[i].nascimento.mes);
+  for (i = 0; i < qtdAtendimentos; i++) {
+    if (dataEstaNoPeriodo(atendimentos[i].data, ini, fim)) {
+      idxProf = indiceProfissionalPorMatricula(atendimentos[i].prof_matricula);
+      idxCli = indiceClientePorCodigo(atendimentos[i].cliente_codigo);
+      nomeProf = (idxProf != -1) ? profissionais[idxProf].nome : "Desc.";
+      nomeCli = (idxCli != -1) ? clientes[idxCli].nome : "Desc.";
+      printf("%02d/%02d/%04d | Cli: %s | Prof: %s\n",
+             atendimentos[i].data.dia,
+             atendimentos[i].data.mes,
+             atendimentos[i].data.ano,
+             nomeCli,
+             nomeProf);
     }
   }
+  pause();
+}
 
+void relAtendimentosPorMesAno() {
+  int ano, contadores[13], i, m;
+  titulo("Estatistica: Atendimentos por Mes/Ano");
+  ano = lerInt("Digite o ano: ");
+  for (i = 0; i < 13; i++) contadores[i] = 0;
+  for (i = 0; i < qtdAtendimentos; i++) {
+    if (atendimentos[i].data.ano == ano) {
+      contadores[atendimentos[i].data.mes]++;
+    }
+  }
+  for (m = 1; m <= 12; m++) {
+    printf("Mes %02d: %d atendimentos\n", m, contadores[m]);
+  }
+  pause();
+}
+
+void relEstatisticaProfissionalPeriodo() {
+  int p, a, count;
+  struct Data ini, fim;
+  titulo("Estatistica por Profissional (Periodo)");
+  printf("Data Inicial:\n");
+  ini = lerData();
+  printf("Data Final:\n");
+  fim = lerData();
+  printf("\n%-30s | %s\n", "Profissional", "Qtd Atendimentos");
+  printf("----------------------------------------------\n");
+  for (p = 0; p < qtdProfissionais; p++) {
+    count = 0;
+    for (a = 0; a < qtdAtendimentos; a++) {
+      if (atendimentos[a].prof_matricula == profissionais[p].matricula) {
+        if (dataEstaNoPeriodo(atendimentos[a].data, ini, fim)) {
+          count++;
+        }
+      }
+    }
+    if (count > 0) {
+      printf("%-30s | %d\n", profissionais[p].nome, count);
+    }
+  }
   pause();
 }
 
 void relAniversariantesClientes() {
+  int mes, i;
   titulo("Aniversariantes Clientes");
-
-  int mes = lerInt("Digite o mes (1-12): ");
-  while (mes < 1 || mes > 12) {
-    printf("Mes invalido. Digite entre 1 e 12.\n");
-    mes = lerInt("Digite o mes (1-12): ");
-  }
-
-  for (int i = 0; i < qtdClientes; i++) {
+  mes = lerInt("Mes (1-12): ");
+  for (i = 0; i < qtdClientes; i++) {
     if (clientes[i].nascimento.mes == mes) {
-      printf("%s - %d/%d | Fone:%s | Cel:%s | Email:%s\n",
+      printf("%s (%02d/%02d) | Fone: %s | Email: %s | Cel: %s\n",
              clientes[i].nome,
              clientes[i].nascimento.dia,
              clientes[i].nascimento.mes,
              clientes[i].fone,
-             clientes[i].celular,
-             clientes[i].email);
+             clientes[i].email,
+             clientes[i].celular);
     }
   }
-
   pause();
 }
 
-void relAtendimentosPorPeriodo() {
-  titulo("Atendimentos por Periodo");
+void carregarDadosIniciais() {
+  qtdProfissoes = 0;
+  qtdProfissionais = 0;
+  qtdClientes = 0;
+  qtdAtendimentos = 0;
 
-  struct Data ini, fim;
+  profissoes[qtdProfissoes].codigo = 1;
+  strcpy(profissoes[qtdProfissoes].nome, "Medico Clinico Geral");
+  strcpy(profissoes[qtdProfissoes].sigla, "CRM");
+  qtdProfissoes++;
 
-  printf("Data inicial:\n");
-  ini = lerData();
+  profissoes[qtdProfissoes].codigo = 2;
+  strcpy(profissoes[qtdProfissoes].nome, "Enfermeiro");
+  strcpy(profissoes[qtdProfissoes].sigla, "COREN");
+  qtdProfissoes++;
 
-  printf("\nData final:\n");
-  fim = lerData();
+  profissoes[qtdProfissoes].codigo = 3;
+  strcpy(profissoes[qtdProfissoes].nome, "Odontologo");
+  strcpy(profissoes[qtdProfissoes].sigla, "CRO");
+  qtdProfissoes++;
 
-  printf("\n");
+  profissoes[qtdProfissoes].codigo = 4;
+  strcpy(profissoes[qtdProfissoes].nome, "Psicologo");
+  strcpy(profissoes[qtdProfissoes].sigla, "CRP");
+  qtdProfissoes++;
 
-  for (int i = 0; i < qtdAtendimentos; i++) {
-    struct Data d = atendimentos[i].data;
+  profissionais[qtdProfissionais].matricula = 100;
+  strcpy(profissionais[qtdProfissionais].cpf, "11122233344");
+  strcpy(profissionais[qtdProfissionais].nome, "Joao Henrique");
+  profissionais[qtdProfissionais].prof_codigo = 1;
+  strcpy(profissionais[qtdProfissionais].numRP, "CRM45231");
+  strcpy(profissionais[qtdProfissionais].tipo, "Medico Clinico Geral");
+  profissionais[qtdProfissionais].nascimento.dia = 12;
+  profissionais[qtdProfissionais].nascimento.mes = 4;
+  profissionais[qtdProfissionais].nascimento.ano = 1979;
+  strcpy(profissionais[qtdProfissionais].email, "joao.henrique@clinicamanaus.com");
+  strcpy(profissionais[qtdProfissionais].fone, "9230211000");
+  qtdProfissionais++;
 
-    if (
-        (d.ano > ini.ano || (d.ano == ini.ano && (d.mes > ini.mes || (d.mes == ini.mes && d.dia >= ini.dia)))) &&
-        (d.ano < fim.ano || (d.ano == fim.ano && (d.mes < fim.mes || (d.mes == fim.mes && d.dia <= fim.dia)))))
-    {
-      printf("Num: %d | Prof:%d | Cliente:%d | %d/%d/%d\n",
-             atendimentos[i].numero,
-             atendimentos[i].prof_matricula,
-             atendimentos[i].cliente_codigo,
-             d.dia, d.mes, d.ano);
-    }
-  }
+  profissionais[qtdProfissionais].matricula = 101;
+  strcpy(profissionais[qtdProfissionais].cpf, "55566677788");
+  strcpy(profissionais[qtdProfissionais].nome, "Maria Fernanda");
+  profissionais[qtdProfissionais].prof_codigo = 2;
+  strcpy(profissionais[qtdProfissionais].numRP, "COREN91827");
+  strcpy(profissionais[qtdProfissionais].tipo, "Enfermeiro");
+  profissionais[qtdProfissionais].nascimento.dia = 8;
+  profissionais[qtdProfissionais].nascimento.mes = 9;
+  profissionais[qtdProfissionais].nascimento.ano = 1987;
+  strcpy(profissionais[qtdProfissionais].email, "maria.fernanda@clinicamanaus.com");
+  strcpy(profissionais[qtdProfissionais].fone, "9230212000");
+  qtdProfissionais++;
 
-  pause();
+  profissionais[qtdProfissionais].matricula = 102;
+  strcpy(profissionais[qtdProfissionais].cpf, "99900011122");
+  strcpy(profissionais[qtdProfissionais].nome, "Carlos Eduardo");
+  profissionais[qtdProfissionais].prof_codigo = 3;
+  strcpy(profissionais[qtdProfissionais].numRP, "CRO56390");
+  strcpy(profissionais[qtdProfissionais].tipo, "Odontologo");
+  profissionais[qtdProfissionais].nascimento.dia = 3;
+  profissionais[qtdProfissionais].nascimento.mes = 1;
+  profissionais[qtdProfissionais].nascimento.ano = 1990;
+  strcpy(profissionais[qtdProfissionais].email, "carlos.eduardo@odontoamazonas.com");
+  strcpy(profissionais[qtdProfissionais].fone, "9230213000");
+  qtdProfissionais++;
+
+  profissionais[qtdProfissionais].matricula = 103;
+  strcpy(profissionais[qtdProfissionais].cpf, "33344455566");
+  strcpy(profissionais[qtdProfissionais].nome, "Paula Ribeiro");
+  profissionais[qtdProfissionais].prof_codigo = 4;
+  strcpy(profissionais[qtdProfissionais].numRP, "CRP24781");
+  strcpy(profissionais[qtdProfissionais].tipo, "Psicologo");
+  profissionais[qtdProfissionais].nascimento.dia = 25;
+  profissionais[qtdProfissionais].nascimento.mes = 6;
+  profissionais[qtdProfissionais].nascimento.ano = 1985;
+  strcpy(profissionais[qtdProfissionais].email, "paula.ribeiro@psicologiaamazonia.com");
+  strcpy(profissionais[qtdProfissionais].fone, "9230214000");
+  qtdProfissionais++;
+
+  clientes[qtdClientes].codigo = 1;
+  strcpy(clientes[qtdClientes].nome, "Ana Carolina");
+  clientes[qtdClientes].nascimento.dia = 5;
+  clientes[qtdClientes].nascimento.mes = 2;
+  clientes[qtdClientes].nascimento.ano = 2001;
+  clientes[qtdClientes].idade = 24;
+  strcpy(clientes[qtdClientes].email, "ana.carolina@exemplo.com");
+  strcpy(clientes[qtdClientes].fone, "9233111100");
+  strcpy(clientes[qtdClientes].celular, "92993111000");
+  strcpy(clientes[qtdClientes].endereco.logradouro, "Rua Rio Negro");
+  strcpy(clientes[qtdClientes].endereco.numero, "150");
+  strcpy(clientes[qtdClientes].endereco.bairro, "Centro");
+  strcpy(clientes[qtdClientes].endereco.cidade, "Manaus");
+  strcpy(clientes[qtdClientes].endereco.estado, "AM");
+  strcpy(clientes[qtdClientes].endereco.cep, "69005010");
+  qtdClientes++;
+
+  clientes[qtdClientes].codigo = 2;
+  strcpy(clientes[qtdClientes].nome, "Bruno Almeida");
+  clientes[qtdClientes].nascimento.dia = 19;
+  clientes[qtdClientes].nascimento.mes = 7;
+  clientes[qtdClientes].nascimento.ano = 1993;
+  clientes[qtdClientes].idade = 32;
+  strcpy(clientes[qtdClientes].email, "bruno.almeida@exemplo.com");
+  strcpy(clientes[qtdClientes].fone, "9233222200");
+  strcpy(clientes[qtdClientes].celular, "92993222000");
+  strcpy(clientes[qtdClientes].endereco.logradouro, "Avenida Constantino Nery");
+  strcpy(clientes[qtdClientes].endereco.numero, "2450");
+  strcpy(clientes[qtdClientes].endereco.bairro, "Chapada");
+  strcpy(clientes[qtdClientes].endereco.cidade, "Manaus");
+  strcpy(clientes[qtdClientes].endereco.estado, "AM");
+  strcpy(clientes[qtdClientes].endereco.cep, "69050001");
+  qtdClientes++;
+
+  clientes[qtdClientes].codigo = 3;
+  strcpy(clientes[qtdClientes].nome, "Clara Mendes");
+  clientes[qtdClientes].nascimento.dia = 11;
+  clientes[qtdClientes].nascimento.mes = 10;
+  clientes[qtdClientes].nascimento.ano = 1984;
+  clientes[qtdClientes].idade = 41;
+  strcpy(clientes[qtdClientes].email, "clara.mendes@exemplo.com");
+  strcpy(clientes[qtdClientes].fone, "9233333300");
+  strcpy(clientes[qtdClientes].celular, "92993333000");
+  strcpy(clientes[qtdClientes].endereco.logradouro, "Travessa das Palmeiras");
+  strcpy(clientes[qtdClientes].endereco.numero, "320");
+  strcpy(clientes[qtdClientes].endereco.bairro, "Adrianopolis");
+  strcpy(clientes[qtdClientes].endereco.cidade, "Manaus");
+  strcpy(clientes[qtdClientes].endereco.estado, "AM");
+  strcpy(clientes[qtdClientes].endereco.cep, "69057020");
+  qtdClientes++;
+
+  atendimentos[qtdAtendimentos].numero = 1;
+  atendimentos[qtdAtendimentos].prof_matricula = 100;
+  atendimentos[qtdAtendimentos].cliente_codigo = 1;
+  atendimentos[qtdAtendimentos].data.dia = 4;
+  atendimentos[qtdAtendimentos].data.mes = 3;
+  atendimentos[qtdAtendimentos].data.ano = 2025;
+  strcpy(atendimentos[qtdAtendimentos].descricao, "Consulta inicial de avaliacao clinica geral");
+  qtdAtendimentos++;
+
+  atendimentos[qtdAtendimentos].numero = 2;
+  atendimentos[qtdAtendimentos].prof_matricula = 101;
+  atendimentos[qtdAtendimentos].cliente_codigo = 1;
+  atendimentos[qtdAtendimentos].data.dia = 11;
+  atendimentos[qtdAtendimentos].data.mes = 3;
+  atendimentos[qtdAtendimentos].data.ano = 2025;
+  strcpy(atendimentos[qtdAtendimentos].descricao, "Retorno de enfermagem para acompanhamento de pressao");
+  qtdAtendimentos++;
+
+  atendimentos[qtdAtendimentos].numero = 3;
+  atendimentos[qtdAtendimentos].prof_matricula = 102;
+  atendimentos[qtdAtendimentos].cliente_codigo = 2;
+  atendimentos[qtdAtendimentos].data.dia = 18;
+  atendimentos[qtdAtendimentos].data.mes = 4;
+  atendimentos[qtdAtendimentos].data.ano = 2025;
+  strcpy(atendimentos[qtdAtendimentos].descricao, "Avaliacao odontologica e limpeza");
+  qtdAtendimentos++;
+
+  atendimentos[qtdAtendimentos].numero = 4;
+  atendimentos[qtdAtendimentos].prof_matricula = 103;
+  atendimentos[qtdAtendimentos].cliente_codigo = 3;
+  atendimentos[qtdAtendimentos].data.dia = 25;
+  atendimentos[qtdAtendimentos].data.mes = 4;
+  atendimentos[qtdAtendimentos].data.ano = 2025;
+  strcpy(atendimentos[qtdAtendimentos].descricao, "Sessao de psicoterapia individual");
+  qtdAtendimentos++;
+
+  atendimentos[qtdAtendimentos].numero = 5;
+  atendimentos[qtdAtendimentos].prof_matricula = 100;
+  atendimentos[qtdAtendimentos].cliente_codigo = 2;
+  atendimentos[qtdAtendimentos].data.dia = 6;
+  atendimentos[qtdAtendimentos].data.mes = 5;
+  atendimentos[qtdAtendimentos].data.ano = 2025;
+  strcpy(atendimentos[qtdAtendimentos].descricao, "Reavaliacao clinica com ajuste de medicacao");
+  qtdAtendimentos++;
 }
 
-void relAtendimentoPorMes() {
-  titulo("Atendimento por mes");
-
-  int ano = lerInt("Digite o ano: ");
-
-  int meses[13] = {0};
-
-  for (int i = 0; i < qtdAtendimentos; i++) {
-    if (atendimentos[i].data.ano == ano) {
-      meses[atendimentos[i].data.mes]++;
-    }
-  }
-
-  printf("\nMes | Quantidade\n");
-  for (int m = 1; m <= 12; m++) {
-    printf("%02d | %d\n", m, meses[m]);
-  }
-
-  pause();
-}
-
-void relEstatisticaPorProfissional() {
-  titulo("Estatistica por Profissional");
-
-  int mat = lerInt("Matricula do profissional: ");
-
-  int total = 0;
-
-  for (int i = 0; i < qtdAtendimentos; i++) {
-    if (atendimentos[i].prof_matricula == mat) total++;
-  }
-
-  printf("\nTotal de atendimentos: %d\n", total);
-  pause();
-}
-
-void menu() {
+void menuProfissoes() {
   int op;
-
   do {
-    titulo("SISTEMA DE SAUDE");
-
-    printf("[1] Cadastrar Profissao\n");
-    printf("[2] Cadastrar Profissional\n");
-    printf("[3] Cadastrar Cliente\n");
-    printf("[4] Cadastrar Atendimento\n");
-    printf("[5] Listar Profissoes\n");
-    printf("[6] Listar Profissionais\n");
-    printf("[7] Listar Clientes\n");
-    printf("[8] Listar Atendimentos\n");
-    printf("[9] Rel: Aniversariantes Profissionais\n");
-    printf("[10] Rel: Aniversariantes Clientes\n");
-    printf("[11] Rel: Atendimentos por Periodo\n");
-    printf("[12] Rel: Atendimentos por Mes de um Ano\n");
-    printf("[13] Rel: Estatistica por Profissional\n");
-    printf("[0] Sair\n");
-    op = lerInt("\nEscolha: ");
-
+    titulo("GESTAO DE PROFISSOES");
+    printf("1. Cadastrar\n");
+    printf("2. Editar\n");
+    printf("3. Excluir\n");
+    printf("4. Listar (Auxiliar)\n");
+    printf("0. Voltar\n");
+    op = lerInt("Opcao: ");
     switch (op) {
       case 1: cadastrarProfissao(); break;
-      case 2: cadastrarProfissional(); break;
-      case 3: cadastrarCliente(); break;
-      case 4: cadastrarAtendimento(); break;
-      case 5: listarProfissoes(); break;
-      case 6: listarProfissionais(); break;
-      case 7: listarClientes(); break;
-      case 8: listarAtendimentos(); break;
-      case 9: relAniversariantesProfissionais(); break;
-      case 10: relAniversariantesClientes(); break;
-      case 11: relAtendimentosPorPeriodo(); break;
-      case 12: relAtendimentoPorMes(); break;
-      case 13: relEstatisticaPorProfissional(); break;
-      case 0: printf("Encerrando..."); break;
-      default:
-        printf("Opcao invalida!");
-        pause();
+      case 2: editarProfissao(); break;
+      case 3: excluirProfissao(); break;
+      case 4: mostrarProfissoes(); pause(); break;
+    }
+  } while (op != 0);
+}
+
+void menuProfissionais() {
+  int op;
+  do {
+    titulo("GESTAO DE PROFISSIONAIS");
+    printf("1. Cadastrar\n");
+    printf("2. Editar\n");
+    printf("3. Excluir\n");
+    printf("4. Listar (Auxiliar)\n");
+    printf("0. Voltar\n");
+    op = lerInt("Opcao: ");
+    switch (op) {
+      case 1: cadastrarProfissional(); break;
+      case 2: editarProfissional(); break;
+      case 3: excluirProfissional(); break;
+      case 4: mostrarProfissionais(); pause(); break;
+    }
+  } while (op != 0);
+}
+
+void menuClientes() {
+  int op;
+  do {
+    titulo("GESTAO DE CLIENTES");
+    printf("1. Cadastrar\n");
+    printf("2. Editar\n");
+    printf("3. Excluir\n");
+    printf("4. Listar (Auxiliar)\n");
+    printf("0. Voltar\n");
+    op = lerInt("Opcao: ");
+    switch (op) {
+      case 1: cadastrarCliente(); break;
+      case 2: editarCliente(); break;
+      case 3: excluirCliente(); break;
+      case 4: mostrarClientes(); pause(); break;
+    }
+  } while (op != 0);
+}
+
+void menuAtendimentos() {
+  int op;
+  do {
+    titulo("GESTAO DE ATENDIMENTOS");
+    printf("1. Novo Atendimento\n");
+    printf("2. Editar\n");
+    printf("3. Excluir\n");
+    printf("4. Listar Todos (Detalhado)\n");
+    printf("0. Voltar\n");
+    op = lerInt("Opcao: ");
+    switch (op) {
+      case 1: cadastrarAtendimento(); break;
+      case 2: editarAtendimento(); break;
+      case 3: excluirAtendimento(); break;
+      case 4: relAtendimentoGeral(); break;
+    }
+  } while (op != 0);
+}
+
+void menuRelatorios() {
+  int op;
+  do {
+    titulo("RELATORIOS GERENCIAIS");
+    printf("1. Listagem de Profissionais (Completa)\n");
+    printf("2. Aniversariantes da Instituicao (Profissionais)\n");
+    printf("3. Atendimento Geral\n");
+    printf("4. Atendimento por Periodo\n");
+    printf("5. Estatistica Mensal (Ano)\n");
+    printf("6. Estatistica por Profissional (Periodo)\n");
+    printf("7. Aniversariantes Clientes\n");
+    printf("0. Voltar\n");
+    op = lerInt("Opcao: ");
+    switch (op) {
+      case 1: relListagemProfissionais(); break;
+      case 2: relAniversariantes(); break;
+      case 3: relAtendimentoGeral(); break;
+      case 4: relAtendimentoPorPeriodo(); break;
+      case 5: relAtendimentosPorMesAno(); break;
+      case 6: relEstatisticaProfissionalPeriodo(); break;
+      case 7: relAniversariantesClientes(); break;
     }
   } while (op != 0);
 }
 
 int main() {
-  menu();
+  int op;
+  carregarDadosIniciais();
+  do {
+    titulo("SISTEMA DE SAUDE (Trabalho 2 - IFAM)");
+    printf("1. Profissoes\n");
+    printf("2. Profissionais\n");
+    printf("3. Clientes\n");
+    printf("4. Atendimentos\n");
+    printf("5. Relatorios\n");
+    printf("0. Sair\n");
+    op = lerInt("Escolha: ");
+    switch (op) {
+      case 1: menuProfissoes(); break;
+      case 2: menuProfissionais(); break;
+      case 3: menuClientes(); break;
+      case 4: menuAtendimentos(); break;
+      case 5: menuRelatorios(); break;
+      case 0: printf("Encerrando...\n"); break;
+      default:
+        printf("Invalido!");
+        pause();
+    }
+  } while (op != 0);
   return 0;
 }
