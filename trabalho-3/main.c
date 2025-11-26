@@ -906,7 +906,7 @@ int main() {
   inicializarDados();
 
   do {
-    titulo("SISTEMA DE SAUDE (Trabalho 2 - IFAM)");
+    titulo("SISTEMA DE SAUDE (Trabalho 3 - IFAM)");
     printf("1. Profissoes\n");
     printf("2. Profissionais\n");
     printf("3. Clientes\n");
